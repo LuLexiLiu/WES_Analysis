@@ -11,204 +11,204 @@ Current practice for somatic mutation calling of WES data using Mutect2
 
 ## Example script
 
-#!/bin/bash
+    #!/bin/bash
 
-#Set the path to the references and input/output files
-  export TumorIN=/path/to/tumor/fastq/input
-  export NormalIN=/path/to/normal/fastq/input
-  export REF=/path/to/reference_genome.fa
-  export OUTPUT_DIR=/path/to/output
+    #Set the path to the references and input/output files
+    export TumorIN=/path/to/tumor/fastq/input
+    export NormalIN=/path/to/normal/fastq/input
+    export REF=/path/to/reference_genome.fa
+    export OUTPUT_DIR=/path/to/output
 
-#Trim adaptors of sequencing reads
-  cutadapt \
-    --minimum-length 20 \
-    --overlap 1 \
-    -q 20 \
-    -a CTGTCTCTTATACACATCT \
-    -A CTGTCTCTTATACACATCT \
-    -o $TumorIN/Tumor_sample.trimmed.R1.fastq.gz \
-    -p $TumorIN/Tumor_sample.trimmed.R2.fastq.gz \
-    $TumorIN/Tumor_sample.untrimmed.R1.fastq.gz \
-    $TumorIN/Tumor_sample.untrimmed.R2.fastq.gz
-  cutadapt \
-    --minimum-length 20 \
-    --overlap 1 \
-    -q 20 \
-    -a CTGTCTCTTATACACATCT \
-    -A CTGTCTCTTATACACATCT \
-    -o $NormalIN/Normal_sample.trimmed.R1.fastq.gz \
-    -p $NormalIN/Normal_sample.trimmed.R2.fastq.gz \
-    $NormalIN/Normal_sample.untrimmed.R1.fastq.gz \
-    $NormalIN/Normal_sample.untrimmed.R2.fastq.gz
+    #Trim adaptors of sequencing reads
+      cutadapt \
+        --minimum-length 20 \
+        --overlap 1 \
+        -q 20 \
+        -a CTGTCTCTTATACACATCT \
+        -A CTGTCTCTTATACACATCT \
+        -o $TumorIN/Tumor_sample.trimmed.R1.fastq.gz \
+        -p $TumorIN/Tumor_sample.trimmed.R2.fastq.gz \
+        $TumorIN/Tumor_sample.untrimmed.R1.fastq.gz \
+        $TumorIN/Tumor_sample.untrimmed.R2.fastq.gz
+      cutadapt \
+        --minimum-length 20 \
+        --overlap 1 \
+        -q 20 \
+        -a CTGTCTCTTATACACATCT \
+        -A CTGTCTCTTATACACATCT \
+        -o $NormalIN/Normal_sample.trimmed.R1.fastq.gz \
+        -p $NormalIN/Normal_sample.trimmed.R2.fastq.gz \
+        $NormalIN/Normal_sample.untrimmed.R1.fastq.gz \
+        $NormalIN/Normal_sample.untrimmed.R2.fastq.gz
 
-#Perform alignment and preprocessing
-  bwa-mem2 mem \
-    -t 36 \
-    $REF \
-    $TumorIN/Tumor_sample.trimmed.R1.fastq.gz \
-    $TumorIN/Tumor_sample.trimmed.R2.fastq.gz \
-    |samtools sort \
-    -o $OUTPUT_DIR/Tumor_sample_bwa_sorted.bam
-  bwa-mem2 mem \
-    -t 36 \
-    $REF \
-    $NormalIN/Normal_sample.trimmed.R1.fastq.gz \
-    $NormalIN/Normal_sample.trimmed.R2.fastq.gz \
-    |samtools sort \
-    -o $OUTPUT_DIR/Normal_sample_bwa_sorted.bam
+    #Perform alignment and preprocessing
+      bwa-mem2 mem \
+        -t 36 \
+        $REF \
+        $TumorIN/Tumor_sample.trimmed.R1.fastq.gz \
+        $TumorIN/Tumor_sample.trimmed.R2.fastq.gz \
+        |samtools sort \
+        -o $OUTPUT_DIR/Tumor_sample_bwa_sorted.bam
+      bwa-mem2 mem \
+        -t 36 \
+        $REF \
+        $NormalIN/Normal_sample.trimmed.R1.fastq.gz \
+        $NormalIN/Normal_sample.trimmed.R2.fastq.gz \
+        |samtools sort \
+        -o $OUTPUT_DIR/Normal_sample_bwa_sorted.bam
 
-  picard AddOrReplaceReadGroups \
-    -I $OUTPUT_DIR/Tumor_sample_bwa_sorted.bam \
-    -O $OUTPUT_DIR/Tumor_sample_bwa_RG_sorted.bam \
-    -ID name \
-    -LB lib \
-    -PL ILLUMINA \
-    -SM sample_name \
-    -PU barcodes
-  picard AddOrReplaceReadGroups \
-    -I $OUTPUT_DIR/Normal_sample_bwa_sorted.bam \
-    -O $OUTPUT_DIR/Normal_sample_bwa_RG_sorted.bam \
-    -ID name \
-    -LB lib \
-    -PL ILLUMINA \
-    -SM sample_name \
-    -PU barcodes
+      picard AddOrReplaceReadGroups \
+        -I $OUTPUT_DIR/Tumor_sample_bwa_sorted.bam \
+        -O $OUTPUT_DIR/Tumor_sample_bwa_RG_sorted.bam \
+        -ID name \
+        -LB lib \
+        -PL ILLUMINA \
+        -SM sample_name \
+        -PU barcodes
+      picard AddOrReplaceReadGroups \
+        -I $OUTPUT_DIR/Normal_sample_bwa_sorted.bam \
+        -O $OUTPUT_DIR/Normal_sample_bwa_RG_sorted.bam \
+        -ID name \
+        -LB lib \
+        -PL ILLUMINA \
+        -SM sample_name \
+        -PU barcodes
 
-  samtools view \
-    -@10 -b -q 15 \
-    $OUTPUT_DIR/Tumor_sample_bwa_RG_sorted.bam \
-    |samtools sort \
-    -@10 -n - \
-    -o $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name.bam
-  samtools view \
-    -@10 -b -q 15 \
-    $OUTPUT_DIR/Normal_sample_bwa_RG_sorted.bam \
-    |samtools sort \
-    -@10 -n - \
-    -o $OUTPUT_DIR/Normal_sample_bwa_sorted_Name.bam
+      samtools view \
+        -@10 -b -q 15 \
+        $OUTPUT_DIR/Tumor_sample_bwa_RG_sorted.bam \
+        |samtools sort \
+        -@10 -n - \
+        -o $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name.bam
+      samtools view \
+        -@10 -b -q 15 \
+        $OUTPUT_DIR/Normal_sample_bwa_RG_sorted.bam \
+        |samtools sort \
+        -@10 -n - \
+        -o $OUTPUT_DIR/Normal_sample_bwa_sorted_Name.bam
 
-  samtools fixmate \
-    -m \
-    $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name.bam -\
-    |samtools sort \
-    -@10 - \
-    -o $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name_cor.bam
-  samtools fixmate \
-    -m \
-    $OUTPUT_DIR/Normal_sample_bwa_sorted_Name.bam -\
-    |samtools sort \
-    -@10 - \
-    -o $OUTPUT_DIR/Normal_sample_bwa_sorted_Name_cor.bam
+      samtools fixmate \
+        -m \
+        $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name.bam -\
+        |samtools sort \
+        -@10 - \
+        -o $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name_cor.bam
+      samtools fixmate \
+        -m \
+        $OUTPUT_DIR/Normal_sample_bwa_sorted_Name.bam -\
+        |samtools sort \
+        -@10 - \
+        -o $OUTPUT_DIR/Normal_sample_bwa_sorted_Name_cor.bam
 
-#Mark duplicates
-  samtools markdup \
-    -r -s \
-    -f $OUTPUT_DIR/Tumor_dup.txt \
-    $OUTPUT_DIR/Tumor_bwa_sorted_Name_cor.bam \
-    $OUTPUT_DIR/Tumor_bwa_sorted_q15_rmdup.bam
-  samtools markdup \
-    -r -s \
-    -f $OUTPUT_DIR/Normal_dup.txt \
-    $OUTPUT_DIR/Normal_bwa_sorted_Name_cor.bam \
-    $OUTPUT_DIR/Normal_bwa_sorted_q15_rmdup.bam
+    #Mark duplicates
+      samtools markdup \
+        -r -s \
+        -f $OUTPUT_DIR/Tumor_dup.txt \
+        $OUTPUT_DIR/Tumor_bwa_sorted_Name_cor.bam \
+        $OUTPUT_DIR/Tumor_bwa_sorted_q15_rmdup.bam
+      samtools markdup \
+        -r -s \
+        -f $OUTPUT_DIR/Normal_dup.txt \
+        $OUTPUT_DIR/Normal_bwa_sorted_Name_cor.bam \
+        $OUTPUT_DIR/Normal_bwa_sorted_q15_rmdup.bam
 
-#Base recalibration
-  gatk BaseRecalibrator \
-    -I $OUTPUT_DIR/Tumor_bwa_sorted_q15_rmdup.bam \
-    -R $REF \
-    --known-sites /path/to/GATK/dbsnp_146.hg38.vcf.gz \
-    -O $OUTPUT_DIR/Tumor_recal_data.table
-  gatk BaseRecalibrator \
-    -I $OUTPUT_DIR/Normal_bwa_sorted_q15_rmdup.bam \
-    -R $REF \
-    --known-sites /path/to/GATK/dbsnp_146.hg38.vcf.gz \
-    -O $OUTPUT_DIR/Normal_recal_data.table
+    #Base recalibration
+      gatk BaseRecalibrator \
+        -I $OUTPUT_DIR/Tumor_bwa_sorted_q15_rmdup.bam \
+        -R $REF \
+        --known-sites /path/to/GATK/dbsnp_146.hg38.vcf.gz \
+        -O $OUTPUT_DIR/Tumor_recal_data.table
+      gatk BaseRecalibrator \
+        -I $OUTPUT_DIR/Normal_bwa_sorted_q15_rmdup.bam \
+        -R $REF \
+        --known-sites /path/to/GATK/dbsnp_146.hg38.vcf.gz \
+        -O $OUTPUT_DIR/Normal_recal_data.table
 
-  gatk ApplyBQSR \
-    -R $REF \
-    -I $OUTPUT_DIR/Tumor_bwa_sorted_RG.bam \
-    --bqsr-recal-file $OUTPUT_DIR/Tumor_recal_data.table \
-    -O $OUTPUT_DIR/Tumor_final.bam
-  gatk ApplyBQSR \
-    -R $REF \
-    -I $OUTPUT_DIR/Normal_bwa_sorted_RG.bam \
-    --bqsr-recal-file $OUTPUT_DIR/Normal_recal_data.table \
-    -O $OUTPUT_DIR/Normal_final.bam
+      gatk ApplyBQSR \
+        -R $REF \
+        -I $OUTPUT_DIR/Tumor_bwa_sorted_RG.bam \
+        --bqsr-recal-file $OUTPUT_DIR/Tumor_recal_data.table \
+        -O $OUTPUT_DIR/Tumor_final.bam
+      gatk ApplyBQSR \
+        -R $REF \
+        -I $OUTPUT_DIR/Normal_bwa_sorted_RG.bam \
+        --bqsr-recal-file $OUTPUT_DIR/Normal_recal_data.table \
+        -O $OUTPUT_DIR/Normal_final.bam
 
-#Remove temporary bam files
-  rm $OUTPUT_DIR/Tumor_sample_bwa_RG_sorted.bam \
-    $OUTPUT_DIR/Normal_sample_bwa_RG_sorted.bam \
-    $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name.bam \
-    $OUTPUT_DIR/Normal_sample_bwa_sorted_Name.bam \
-    $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name_cor.bam \
-    $OUTPUT_DIR/Normal_sample_bwa_sorted_Name_cor.bam \
-    $OUTPUT_DIR/Tumor_bwa_sorted_q15_rmdup.bam \
-    $OUTPUT_DIR/Normal_bwa_sorted_q15_rmdup.bam 
+    #Remove temporary bam files
+      rm $OUTPUT_DIR/Tumor_sample_bwa_RG_sorted.bam \
+        $OUTPUT_DIR/Normal_sample_bwa_RG_sorted.bam \
+        $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name.bam \
+        $OUTPUT_DIR/Normal_sample_bwa_sorted_Name.bam \
+        $OUTPUT_DIR/Tumor_sample_bwa_sorted_Name_cor.bam \
+        $OUTPUT_DIR/Normal_sample_bwa_sorted_Name_cor.bam \
+        $OUTPUT_DIR/Tumor_bwa_sorted_q15_rmdup.bam \
+        $OUTPUT_DIR/Normal_bwa_sorted_q15_rmdup.bam 
 
-#Call somatic variants using Mutect2
-  gatk Mutect2 \
-    -R $REF \
-    -I $OUTPUT_DIR/Tumor_final.bam \
-    -I $OUTPUT_DIR/Normal_final.bam \
-    -normal Normal \
-    -O $OUTPUT_DIR/somatic_variants.vcf
+    #Call somatic variants using Mutect2
+      gatk Mutect2 \
+        -R $REF \
+        -I $OUTPUT_DIR/Tumor_final.bam \
+        -I $OUTPUT_DIR/Normal_final.bam \
+        -normal Normal \
+        -O $OUTPUT_DIR/somatic_variants.vcf
 
-  # Filter somatic variants
-  gatk GetPileupSummaries \
-    -I $OUTPUT_DIR/Tumor_final.bam \
-    -V /path/to/gnomAD/small_exac_common_3.hg38.vcf.gz \
-    -L /path/to/dbsnp/common_all_20180418.vcf.gz \
-    -O $OUTPUT_DIR/Tumor_pileups.table
-  gatk GetPileupSummaries \
-    -I $OUTPUT_DIR/Normal_final.bam \
-    -V /path/to/gnomAD/small_exac_common_3.hg38.vcf.gz \
-    -L /path/to/dbsnp/common_all_20180418.vcf.gz \
-    -O $OUTPUT_DIR/Normal_pileups.table
+      # Filter somatic variants
+      gatk GetPileupSummaries \
+        -I $OUTPUT_DIR/Tumor_final.bam \
+        -V /path/to/gnomAD/small_exac_common_3.hg38.vcf.gz \
+        -L /path/to/dbsnp/common_all_20180418.vcf.gz \
+        -O $OUTPUT_DIR/Tumor_pileups.table
+      gatk GetPileupSummaries \
+        -I $OUTPUT_DIR/Normal_final.bam \
+        -V /path/to/gnomAD/small_exac_common_3.hg38.vcf.gz \
+        -L /path/to/dbsnp/common_all_20180418.vcf.gz \
+        -O $OUTPUT_DIR/Normal_pileups.table
 
-  gatk CalculateContamination \
-    -I $OUTPUT_DIR/Tumor_pileups.table \
-    -matched $OUTPUT_DIR/Normal_pileups.table \
-    -O $OUTPUT_DIR/Tumor_contamination.table
+      gatk CalculateContamination \
+        -I $OUTPUT_DIR/Tumor_pileups.table \
+        -matched $OUTPUT_DIR/Normal_pileups.table \
+        -O $OUTPUT_DIR/Tumor_contamination.table
 
-  gatk CollectF1R2Counts \
-    -I $OUTPUT_DIR/Tumor_final.bam \
-    -R $REF \
-    -O $OUTPUT_DIR/Tumor_f1r2.tar.gz
+      gatk CollectF1R2Counts \
+        -I $OUTPUT_DIR/Tumor_final.bam \
+        -R $REF \
+        -O $OUTPUT_DIR/Tumor_f1r2.tar.gz
 
-  gatk LearnReadOrientationModel \
-    -I $OUTPUT_DIR/Tumor_f1r2.tar.gz \
-    -O $OUTPUT_DIR/Tumor_artifact-prior.tar.gz
+      gatk LearnReadOrientationModel \
+        -I $OUTPUT_DIR/Tumor_f1r2.tar.gz \
+        -O $OUTPUT_DIR/Tumor_artifact-prior.tar.gz
 
-  gatk FilterMutectCalls \
-    -R $REF \
-    -V $OUTPUT_DIR/Tumor_somatic.vcf.gz \
-    --contamination-table \
-    $OUTPUT_DIR/Tumor_contamination.table \
-    -ob-priors $OUTPUT_DIR/Tumor_artifact-prior.tar.gz \
-    -O $OUTPUT_DIR/Tumor_filtered_interval.vcf.gz \
+      gatk FilterMutectCalls \
+        -R $REF \
+        -V $OUTPUT_DIR/Tumor_somatic.vcf.gz \
+        --contamination-table \
+        $OUTPUT_DIR/Tumor_contamination.table \
+        -ob-priors $OUTPUT_DIR/Tumor_artifact-prior.tar.gz \
+        -O $OUTPUT_DIR/Tumor_filtered_interval.vcf.gz \
 
-#Annotate the passing-filter somatic variants
-  zcat $OUTPUT_DIR/Tumor_iltered_interval.vcf.gz\
-    |grep '^#' > $OUTPUT_DIR/Tumor.vcf.head
+    #Annotate the passing-filter somatic variants
+      zcat $OUTPUT_DIR/Tumor_iltered_interval.vcf.gz\
+        |grep '^#' > $OUTPUT_DIR/Tumor.vcf.head
 
-  zcat $OUTPUT_DIR/Tumor_filtered_interval.vcf.gz|\
-    awk '$7=="PASS"' >\
-    $OUTPUT_DIR/Tumor_PASS_interval.vcf.clean
+      zcat $OUTPUT_DIR/Tumor_filtered_interval.vcf.gz|\
+        awk '$7=="PASS"' >\
+        $OUTPUT_DIR/Tumor_PASS_interval.vcf.clean
 
-  cat $OUTPUT_DIR/Tumor.vcf.head \
-    $OUTPUT_DIR/Tumor_PASS_interval.vcf.clean \
-    > $OUTPUT_DIR/Tumor_PASS_interval.vcf
+      cat $OUTPUT_DIR/Tumor.vcf.head \
+        $OUTPUT_DIR/Tumor_PASS_interval.vcf.clean \
+        > $OUTPUT_DIR/Tumor_PASS_interval.vcf
 
-  rm $OUTPUT_DIR/Tumor.vcf.head \
-    $OUTPUT_DIR/Tumor_PASS_interval.vcf.clean
+      rm $OUTPUT_DIR/Tumor.vcf.head \
+        $OUTPUT_DIR/Tumor_PASS_interval.vcf.clean
 
-  gatk Funcotator \
-    -R $REF \
-    -V $OUTPUT_DIR/Tumor_PASS_interval.vcf \
-    -O $OUTPUT_DIR/Tumor_PASS_interval.table \
-    --output-file-format MAF \
-    --data-sources-path /path/to/FuncotatorDataSource \
-    --ref-version hg38
+      gatk Funcotator \
+        -R $REF \
+        -V $OUTPUT_DIR/Tumor_PASS_interval.vcf \
+        -O $OUTPUT_DIR/Tumor_PASS_interval.table \
+        --output-file-format MAF \
+        --data-sources-path /path/to/FuncotatorDataSource \
+        --ref-version hg38
 
 ## Downstream analysis after SNP calling:
 1.	Further filtering: After annotation, SNPs could be further filtered based on various criteria, such as frequency, quality, and functional impact. For example, SNPs with a minor allele frequency (MAF) higher than a certain threshold in population databases, or those with low read depth or quality scores, may be filtered out.
